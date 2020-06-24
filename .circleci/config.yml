@@ -1,0 +1,186 @@
+#
+# Note on --runInBand: 
+#
+# When running Jest tests, please use the --runInBand flag. Without this flag, Jest will try to
+# allocate the CPU resources of the entire virtual machine in which your job is running. Using
+# --runInBand will force Jest to use only the virtualized build environment within the virtual
+# machine
+#
+# Note on --ci
+#
+# When this option is provided, Jest will assume it is running in a CI environment. This changes
+# the behavior when a new snapshot is encountered. Instead of the regular behavior of storing a new
+# snapshot automatically, it will fail the test and require Jest to be run with --updateSnapshot.
+#
+version: 2.1
+# this doesn't seem to have an effect and setting this in every job for consistency is annoying
+# default is 'project'
+# working_directory: erector
+commands:
+  install:
+    description: "Checks out and installs"
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "package.json" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+
+      - run: npm install
+
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+
+  test-build:
+    description: "Tests pre built dist"
+    steps:
+
+      - attach_workspace:
+          at: ./
+
+      - run:
+          name: Build and run tests
+          command: npm run test-build -- --ci --runInBand --reporters=default --reporters=jest-junit
+
+      - store_test_results:
+          path: test-results
+
+jobs:
+  build-for-dist:
+    docker:
+      - image: circleci/node:lts
+
+    steps:
+      - install
+
+      - run:
+          name: Build
+          command: npm run build
+
+      - persist_to_workspace:
+          root: ./
+          paths:
+            - ./*
+
+  test-and-coverage:
+    docker:
+      # specify the version you desire here
+      - image: circleci/node:lts
+
+    steps:
+      - install
+
+      - run: 
+          name: Run tests and collect coverage
+          command: npm run test+coverage -- --ci --runInBand --reporters=default --reporters=jest-junit
+
+      - store_test_results:
+          path: test-results
+
+      - store_artifacts:
+          path: coverage
+
+      - run: 
+          name: Report coverage stats
+          command: npm run coverage-post
+
+  release-preview:
+    docker:
+      - image: circleci/node:lts
+    steps:
+      - install
+      - run: npx semantic-release --dry-run 
+
+  release:
+    docker:
+      - image: circleci/node:lts
+    steps:
+      - install
+      - run: npx semantic-release
+
+  test-node-10:
+    docker:
+      - image: circleci/node:10
+    steps:
+      - test-build
+
+  test-node-12:
+    docker:
+      - image: circleci/node:12
+    steps:
+      - test-build
+
+  test-node-14:
+    docker:
+      - image: circleci/node:14
+    steps:
+      - test-build
+
+workflows: 
+  version: 2
+  # can set up nightly jobs
+  build-and-test:
+    jobs:
+      - test-and-coverage
+
+      - build-for-dist:
+          filters:
+            branches:
+              only: 
+                - master
+                - pre-alpha
+                - alpha
+                - beta
+
+      # could conditionally test 6..12 based on PR attrs (label, dest branch) w/ "when:" or "filters"
+
+      - test-node-10:
+          requires:
+            - build-for-dist
+
+      - test-node-12:
+          requires:
+            - build-for-dist
+
+      - test-node-14:
+          requires:
+            - build-for-dist
+
+      - release-preview:
+          filters:
+              branches:
+                only:
+                  - pre-alpha
+                  - alpha
+                  - beta
+                  - release
+                  - /([0-9]+)\.([0-9]+\.)?([0-9]+|x)/
+                
+          requires:
+            - test-node-10
+            - test-node-12
+            - test-node-14
+
+      - release-approval:
+          type: approval
+          requires:
+              - release-preview
+
+      - release:
+          filters:
+              branches:
+                only:
+                  - pre-alpha
+                  - alpha
+                  - beta
+                  - release
+                  - /([0-9]+)\.([0-9]+\.)?([0-9]+|x)/
+          requires:
+              - release-approval
+
