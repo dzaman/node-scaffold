@@ -66,4 +66,20 @@
 3. Verify webooks on Github
 4. Add Github [personal access tokens](https://github.com/settings/tokens) for [release tokens](https://github.com/semantic-release/semantic-release/blob/master/docs/usage/ci-configuration.md#push-access-to-the-remote-repository)
 5. Add [NPM access tokens](https://www.npmjs.com/settings/dzaman/tokens) for distribution
+6. Install the [Codecov Github App](https://github.com/apps/codecov)
 
+# Release Branches
+
+Create releases by merging to a release branch and running semantic-release on that branch. A release branch (e.g. `release`) will need to be pushed to the repo origin in order to execute semantic release on any branch because one release branch is required and pre-release branches do not count.
+
+```
+{
+  "branches": [
+    { "name": "pre-alpha", "prerelease": true },
+    { "name": "alpha", "prerelease": true },
+    { "name": "beta", "prerelease": true },
+    "release",
+    "+([0-9])?(.{+([0-9]),x}).x"
+  ]
+}
+```
