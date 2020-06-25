@@ -28,9 +28,11 @@
 `npm run build+test -- -- --collect-coverage`
 
 ## commit
-`npx git-cz"`
+
+`npx git-cz`
 
 ## coverage-post
+
 `node_modules/.bin/codecov`
 
 ## docs
@@ -51,9 +53,17 @@
 
 ## test-build
 
-`x"npm test -- -c jest.config.build.js`
+`npm test -- -c jest.config.build.js`
 
 ## test+coverage
 
 `node_modules/.bin/jest --collect-coverage`
+
+# Setup
+
+1. Add project to [CircleCI](https://app.circleci.com/projects/project-dashboard/github/dzaman/) and [Codecov](https://codecov.io/gh/dzaman/+)
+2. Add Codecov token to CircleCI environment variables
+3. Verify webooks on Github
+4. Add Github [personal access tokens](https://github.com/settings/tokens) for [release tokens](https://github.com/semantic-release/semantic-release/blob/master/docs/usage/ci-configuration.md#push-access-to-the-remote-repository)
+5. Add [NPM access tokens](https://www.npmjs.com/settings/dzaman/tokens) for distribution
 
