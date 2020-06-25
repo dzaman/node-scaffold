@@ -1,4 +1,4 @@
-[![CircleCI](https://img.shields.io/circleci/build/github/dzaman/node-skeleton)](https://circleci.com/gh/dzaman/node-skeleton) [![codecov](https://img.shields.io/codecov/c/github/dzaman/node-skeleton)](https://codecov.io/gh/dzaman/node-skeleton)
+[![CircleCI](https://img.shields.io/circleci/build/github/dzaman/node-scaffold)](https://circleci.com/gh/dzaman/node-scaffold) [![codecov](https://img.shields.io/codecov/c/github/dzaman/node-scaffold)](https://codecov.io/gh/dzaman/node-scaffold)
 
 # Features
 
